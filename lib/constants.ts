@@ -1,4 +1,14 @@
-export const events = [
+type EventsList = {
+    slug: string,
+    image: string,
+    title: string,
+    location: string,
+    date: string,
+    time: string,
+}
+
+
+export const events: EventsList[] = [
     {
         slug: "react-conf-2024",
         image: "/images/event1.png",
