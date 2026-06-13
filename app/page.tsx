@@ -1,15 +1,28 @@
-import React from 'react'
+import React, { Suspense } from 'react'
 import ExploreBtn from "@/components/ExploreBtn";
 import EventCard from "@/components/EventCard";
-import {IEvent} from "@/database/event.model";
+import Event, {IEvent} from "@/database/event.model";
+import connectDB from "@/lib/mongodb";
+import { connection } from 'next/server';
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
+const EventsList = async () => {
+    await connection();
+    await connectDB();
+    const eventsData = await Event.find().sort({createdAt: -1}).lean();
+    const events = JSON.parse(JSON.stringify(eventsData));
 
-const Page = async () => {
-    const response = await fetch(`${BASE_URL}/api/events`, {
-        next: {revalidate: 60}
-    });
-    const {events} = await response.json();
+    return (
+        <ul className="events list-none">
+            {events && events.length > 0 && events.map((event: IEvent) => (
+                <li key={event.title}>
+                    <EventCard {...event} />
+                </li>
+            ))}
+        </ul>
+    )
+}
+
+const Page = () => {
     return (
         <section>
             <h1 className="text-center">The Hub for Every Dev <br/> Event You Can&#39;t Miss</h1>
@@ -19,14 +32,10 @@ const Page = async () => {
 
             <div className="mt-20 space-y-7">
                 <h3>Featured Events</h3>
-
-                <ul className="events list-none">
-                    {events && events.length > 0 && events.map((event: IEvent) => (
-                        <li key={event.title}>
-                            <EventCard {...event} />
-                        </li>
-                    ))}
-                </ul>
+                
+                <Suspense fallback={<p>Loading events...</p>}>
+                    <EventsList />
+                </Suspense>
             </div>
         </section>
     )

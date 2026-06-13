@@ -3,10 +3,9 @@ import {notFound} from "next/navigation";
 import Image from "next/image";
 import BookEvent from "@/components/BookEvent";
 import EventCard from "@/components/EventCard";
-import {IEvent} from "@/database/event.model";
+import Event, {IEvent} from "@/database/event.model";
+import connectDB from "@/lib/mongodb";
 import {getSimilarEventsBySlug} from "@/lib/action/event.action";
-
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL
 
 const EventDetailItem = ({icon, alt, label}: { icon: string; alt: string; label: string; }) => (
     <div className="flex-row-gap-2 items-center">
@@ -34,11 +33,16 @@ const EventTags = ({tags}: { tags: string[] }) => (
     </div>
 )
 
+import { connection } from 'next/server';
+
 const EventDetailsPage = async ({params}: { params: { slug: string } }) => {
     const {slug} = await params
-    const response = await fetch(`${BASE_URL}/api/events/${slug}`)
-    const {event} = await response.json()
-    if (!event) return notFound()
+    await connection();
+    await connectDB();
+    const eventData = await Event.findOne({slug}).lean();
+    if (!eventData) return notFound()
+    
+    const event = JSON.parse(JSON.stringify(eventData));
 
     const bookings = 10
 
